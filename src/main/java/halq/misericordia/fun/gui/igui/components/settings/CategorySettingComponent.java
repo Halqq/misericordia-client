@@ -1,6 +1,6 @@
-package halq.misericordia.fun.gui.igui.components.category;
+package halq.misericordia.fun.gui.igui.components.settings;
 
-import halq.misericordia.fun.executor.settings.SettingMode;
+import halq.misericordia.fun.executor.settings.SettingCategory;
 import halq.misericordia.fun.gui.igui.components.Component;
 import halq.misericordia.fun.gui.igui.components.module.ModuleComponent;
 import halq.misericordia.fun.utils.utils.RenderUtil;
@@ -13,21 +13,21 @@ import java.awt.*;
 
 /**
  * @author Halq
- * @since 20/11/2022 at 13:03
+ * @since 16/06/2023 at 13:03
  */
 
-public class ModeComponent implements Component {
+public class CategorySettingComponent implements Component {
 
     private final Minecraft mc = Minecraft.getMinecraft();
     public int x;
     public int y;
     int width;
     public int height;
-    SettingMode setting;
+    SettingCategory setting;
     ModuleComponent parent;
     public boolean notVisible = false;
 
-    public ModeComponent(ModuleComponent parent, int x, int y, SettingMode setting) {
+    public CategorySettingComponent(ModuleComponent parent, int x, int y, SettingCategory setting) {
         this.x = x;
         this.y = y;
         this.width = 88;
@@ -40,8 +40,6 @@ public class ModeComponent implements Component {
     @Override
     public void render(int mouseX, int mouseY) {
         if (setting.getVisible()) {
-            height = 13;
-
             Gui.drawRect(x + 2, y, x + width, y + height, new Color(13, 13, 23, 255).getRGB());
 
             if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
@@ -51,15 +49,16 @@ public class ModeComponent implements Component {
 
             GL11.glPushMatrix();
             GL11.glScalef(0.5f, 0.5f, 0.5f);
-            mc.fontRenderer.drawStringWithShadow(setting.getName(), (this.x + 2) * 2 + 5 + 2, (this.y + 2.5f) * 2 + 5, -1);
-            mc.fontRenderer.drawStringWithShadow(setting.getValue(), (this.x + 2) * 2 + 50 + width - mc.fontRenderer.getStringWidth(setting.getValue()) - 2, (this.y + 2.5f) * 2 + 5, -1);
+            int fontWidth = mc.fontRenderer.getStringWidth(setting.getValue());
+            mc.fontRenderer.drawString(setting.getValue(), (x + 2) * 2 + (width * 2 - fontWidth) / 2, (y + 2) * 2 + 2, -1);
             GL11.glPopMatrix();
 
             RenderUtil.drawLine(x + 2, y, x + 2, y + height, 1.5f, new Color(InteligentGui.INSTANCE.red.getValue().intValue(), InteligentGui.INSTANCE.green.getValue().intValue(), InteligentGui.INSTANCE.blue.getValue().intValue(), InteligentGui.INSTANCE.alpha.getValue().intValue()).getRGB());
+            RenderUtil.drawLine(x + 14, y + height - 4, x + width - 12, y + height - 4, 1.5f, new Color(InteligentGui.INSTANCE.red.getValue().intValue(), InteligentGui.INSTANCE.green.getValue().intValue(), InteligentGui.INSTANCE.blue.getValue().intValue(), InteligentGui.INSTANCE.alpha.getValue().intValue()).getRGB());
         }else {
             height -= 13;
             y = 0;
-            parent.buttonHeight -= 13;
+
         }
     }
 

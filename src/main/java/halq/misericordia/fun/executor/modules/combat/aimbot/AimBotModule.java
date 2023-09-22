@@ -22,20 +22,21 @@ public class AimBotModule extends Module {
     SettingColor color = create("color", new Color(255, 0, 0, 255), false);
 
     public static AimBotModule INSTANCE;
-    public AimBotModule(){
+
+    public AimBotModule() {
         super("Aimbot", Category.COMBAT);
         INSTANCE = this;
     }
 
     @Override
-    public void onSetting(){
-        if(head.getValue()){
+    public void onSetting() {
+        if (head.getValue()) {
             chest.setValue(false);
             legs.setValue(false);
-        } else if(chest.getValue()){
+        } else if (chest.getValue()) {
             head.setValue(false);
             legs.setValue(false);
-        } else if(legs.getValue()){
+        } else if (legs.getValue()) {
             head.setValue(false);
             chest.setValue(false);
         }

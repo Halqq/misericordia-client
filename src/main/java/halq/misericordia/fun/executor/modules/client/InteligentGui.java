@@ -2,14 +2,11 @@ package halq.misericordia.fun.executor.modules.client;
 
 import halq.misericordia.fun.core.modulecore.Category;
 import halq.misericordia.fun.core.modulecore.Module;
-import halq.misericordia.fun.executor.Misercordia;
 import halq.misericordia.fun.executor.settings.SettingBoolean;
-import halq.misericordia.fun.executor.settings.SettingDouble;
 import halq.misericordia.fun.executor.settings.SettingInteger;
+import halq.misericordia.fun.gui.igui.ClickGuiScreen;
 import halq.misericordia.fun.gui.main.GuiMainMenuScreen;
-import halq.misericordia.fun.utils.Minecraftable;
 import halq.misericordia.fun.utils.utils.ColorUtil;
-import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
@@ -38,18 +35,18 @@ public class InteligentGui extends Module {
     }
 
     @Override
-    public void onSetting(){
-        if(rainbow.getValue()){
-        Color rainbowColor = new Color(ColorUtil.getRainbow(70 * 100, 0, (float) 100 / 100.0f, (float) 100 / 100.0f));
-        red.setValue(rainbowColor.getRed());
-        green.setValue(rainbowColor.getGreen());
-        blue.setValue(rainbowColor.getBlue());
+    public void onSetting() {
+        if (rainbow.getValue()) {
+            Color rainbowColor = new Color(ColorUtil.getRainbow(70 * 100, 0, (float) 100 / 100.0f, (float) 100 / 100.0f));
+            red.setValue(rainbowColor.getRed());
+            green.setValue(rainbowColor.getGreen());
+            blue.setValue(rainbowColor.getBlue());
         }
     }
 
     @Override
     public void onEnable() {
-        mc.displayGuiScreen(Misercordia.INSTANCE.clickGuiScreen);
+        mc.displayGuiScreen(new ClickGuiScreen());
         setDisabled();
     }
 }

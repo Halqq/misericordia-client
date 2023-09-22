@@ -27,7 +27,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.apache.logging.log4j.Level;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -186,13 +185,7 @@ public class CrystalAuraModule extends Module implements Runnable {
         }
 
         if (place.getValue()) {
-            new Thread(() -> {
-                synchronized (CrystalAuraModule.this) {
-                    for (int i = 0; i < ppt.getValue(); i++) {
-                        caPlace();
-                    }
-                }
-            }).start();
+            caPlace();
         }
 
         if (attackPredict.getValue()) {
@@ -407,7 +400,6 @@ public class CrystalAuraModule extends Module implements Runnable {
                     thread.setPriority(Thread.MAX_PRIORITY);
                     thread.start();
                     threadDelay.reset();
-                    FMLLog.log("Csi", Level.DEBUG, "Starting thread: " + thread.getName());
                 }
             }
         }

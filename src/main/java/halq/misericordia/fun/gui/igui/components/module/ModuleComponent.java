@@ -3,7 +3,7 @@ package halq.misericordia.fun.gui.igui.components.module;
 import halq.misericordia.fun.core.modulecore.Module;
 import halq.misericordia.fun.core.settingcore.Setting;
 import halq.misericordia.fun.executor.settings.*;
-import halq.misericordia.fun.gui.igui.components.category.*;
+import halq.misericordia.fun.gui.igui.components.settings.*;
 import halq.misericordia.fun.managers.module.ModuleManager;
 import halq.misericordia.fun.managers.setting.SettingManager;
 import halq.misericordia.fun.gui.igui.components.Component;

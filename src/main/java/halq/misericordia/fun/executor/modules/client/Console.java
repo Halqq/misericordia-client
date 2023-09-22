@@ -1,9 +1,9 @@
 package halq.misericordia.fun.executor.modules.client;
 
-import halq.misericordia.fun.gui.console.ConsoleScreen;
 import halq.misericordia.fun.core.modulecore.Category;
 import halq.misericordia.fun.core.modulecore.Module;
 import halq.misericordia.fun.executor.settings.SettingBoolean;
+import halq.misericordia.fun.gui.console.ConsoleScreen;
 
 /**
  * @author Halq

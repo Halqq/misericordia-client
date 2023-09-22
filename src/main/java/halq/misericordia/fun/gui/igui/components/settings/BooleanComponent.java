@@ -1,4 +1,4 @@
-package halq.misericordia.fun.gui.igui.components.category;
+package halq.misericordia.fun.gui.igui.components.settings;
 
 import halq.misericordia.fun.executor.settings.SettingBoolean;
 import halq.misericordia.fun.gui.igui.components.Component;

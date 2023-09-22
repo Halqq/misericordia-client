@@ -7,6 +7,7 @@ import halq.misericordia.fun.executor.modules.client.*;
 import halq.misericordia.fun.executor.modules.combat.crystalaura.module.CrystalAuraModule;
 import halq.misericordia.fun.executor.modules.combat.killaura.KillAura;
 import halq.misericordia.fun.executor.modules.combat.surround.Surround;
+import halq.misericordia.fun.executor.modules.exploits.Burrow;
 import halq.misericordia.fun.executor.modules.render.*;
 import halq.misericordia.fun.executor.modules.render.chams.crystalchams.CrystalChamsModule;
 import halq.misericordia.fun.executor.modules.render.holesp.HoleEspModule;
@@ -72,6 +73,7 @@ public class ModuleManager implements Minecraftable {
         addModule(new CrossHair());
         addModule(new PacketMine());
         addModule(new Notifier());
+        addModule(new Burrow());
     }
 
     private void addModule(Module module) {

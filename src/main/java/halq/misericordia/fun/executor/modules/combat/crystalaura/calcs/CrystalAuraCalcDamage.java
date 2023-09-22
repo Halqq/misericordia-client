@@ -30,39 +30,28 @@ public class CrystalAuraCalcDamage implements Minecraftable {
     public static List<Block> valid = Arrays.asList(Blocks.OBSIDIAN, Blocks.BEDROCK, Blocks.ENDER_CHEST, Blocks.ANVIL);
 
     public static float calculateDamage(World world, double posX, double posY, double posZ, Entity entity, boolean terrain) {
-        return calculateDamage(world, posX, posY, posZ, entity, 0, terrain);
+        return calculateDamage(posX, posY, posZ, entity);
     }
 
-    public static float calculateDamage(World world, double posX, double posY, double posZ, Entity entity, int interlopedAmount, boolean terrain) {
-        if (entity == mc.player) if (mc.player.capabilities.isCreativeMode) return 0.0f;
-
-        float doubleExplosionSize = 12.0F;
-        double dist = entity.getDistance(posX, posY, posZ);
-
-        if (dist > doubleExplosionSize) return 0f;
-
-        if (interlopedAmount > 0) {
-            Vec3d l_Interloped = getInterpolatedAmount(entity, interlopedAmount);
-            dist = getDistance(l_Interloped.x, l_Interloped.y, l_Interloped.z, posX, posY, posZ);
-        }
-
-        double distancedsize = dist / (double) doubleExplosionSize;
+    public static float calculateDamage(double posX, double posY, double posZ, Entity entity) {
+        float doubleExplosionSize = 12.0f;
+        double distancedsize = entity.getDistance(posX, posY, posZ) / 12.0;
         Vec3d vec3d = new Vec3d(posX, posY, posZ);
-        double blockDensity = 0;
-
+        double blockDensity = 0.0;
         try {
-            if (terrain) blockDensity = getBlockDensity(vec3d, entity.getEntityBoundingBox());
-            else blockDensity = entity.world.getBlockDensity(vec3d, entity.getEntityBoundingBox());
-        } catch (Exception ignored) {
+            blockDensity = entity.world.getBlockDensity(vec3d, entity.getEntityBoundingBox());
+        } catch (Exception exception) {
+            // empty catch block
         }
-
-        double v = (1.0D - distancedsize) * blockDensity;
-        float damage = (int) ((v * v + v) / 2.0D * 7.0D * doubleExplosionSize + 1.0D);
-        double finald = 1.0D;
-        if (entity instanceof EntityLivingBase)
-            finald = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(world, damage), new Explosion(world, null, posX, posY, posZ, 6F, false, true));
+        double v = (1.0 - distancedsize) * blockDensity;
+        float damage = (int) ((v * v + v) / 2.0 * 7.0 * 12.0 + 1.0);
+        double finald = 1.0;
+        if (entity instanceof EntityLivingBase) {
+            finald = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(damage), new Explosion(mc.world, null, posX, posY, posZ, 6.0f, false, true));
+        }
         return (float) finald;
     }
+
 
     public static double getDistance(double p_X, double p_Y, double p_Z, double x, double y, double z) {
         double d0 = p_X - x;
@@ -274,8 +263,8 @@ public class CrystalAuraCalcDamage implements Minecraftable {
         return damage;
     }
 
-    private static float getDamageMultiplied(final World p_World, float damage) {
+    private static float getDamageMultiplied(float damage) {
         int diff = mc.world.getDifficulty().getId();
-        return damage * (diff == 0 ? 0 : (diff == 2 ? 1 : (diff == 1 ? 0.5f : 1.5f)));
+        return damage * (diff == 0 ? 0.0f : (diff == 2 ? 1.0f : (diff == 1 ? 0.5f : 1.5f)));
     }
 }

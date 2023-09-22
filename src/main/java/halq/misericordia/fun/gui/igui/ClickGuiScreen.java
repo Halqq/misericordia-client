@@ -3,9 +3,9 @@ package halq.misericordia.fun.gui.igui;
 import halq.misericordia.fun.core.modulecore.Category;
 import halq.misericordia.fun.gui.guibars.ClickBar;
 import halq.misericordia.fun.gui.guibars.RenderBar;
-import halq.misericordia.fun.gui.igui.components.settings.CategoryComponent;
+import halq.misericordia.fun.gui.igui.components.category.CategoryComponent;
+import halq.misericordia.fun.gui.igui.components.particles.Particles;
 import net.minecraft.client.gui.GuiScreen;
-
 import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
@@ -18,10 +18,16 @@ import java.util.ArrayList;
 
 public class ClickGuiScreen extends GuiScreen {
 
-     ArrayList<CategoryComponent> components;
+    public static ClickGuiScreen INSTANCE;
+    private static final Particles particles = new Particles(240);
+
+    ArrayList<CategoryComponent> components;
+    int screenWidth = width;
+    int screenHeight = height;
 
     public ClickGuiScreen() {
         components = new ArrayList<>();
+        INSTANCE = this;
 
         int x = 5;
         int y = 10;
@@ -39,6 +45,7 @@ public class ClickGuiScreen extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawDefaultBackground();
+        particles.draw(mouseX, mouseY);
         for (CategoryComponent c : components) {
             c.render(mouseX, mouseY);
         }

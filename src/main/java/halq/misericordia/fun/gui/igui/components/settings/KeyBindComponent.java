@@ -1,4 +1,4 @@
-package halq.misericordia.fun.gui.igui.components.category;
+package halq.misericordia.fun.gui.igui.components.settings;
 
 import halq.misericordia.fun.core.modulecore.Module;
 import halq.misericordia.fun.executor.modules.client.InteligentGui;

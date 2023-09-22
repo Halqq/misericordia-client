@@ -1,10 +1,10 @@
-package halq.misericordia.fun.gui.igui.components.category;
+package halq.misericordia.fun.gui.igui.components.settings;
 
-import halq.misericordia.fun.executor.settings.SettingDouble;
+import halq.misericordia.fun.executor.modules.client.InteligentGui;
+import halq.misericordia.fun.executor.settings.SettingInteger;
 import halq.misericordia.fun.gui.igui.components.Component;
 import halq.misericordia.fun.gui.igui.components.module.ModuleComponent;
 import halq.misericordia.fun.utils.utils.RenderUtil;
-import halq.misericordia.fun.executor.modules.client.InteligentGui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import org.lwjgl.opengl.GL11;
@@ -14,10 +14,10 @@ import java.text.DecimalFormat;
 
 /**
  * @author Halq
- * @since 19/11/2022 at 21:28
+ * @since 15/06/2023 at 19:31
  */
 
-public class NumberComponent implements Component {
+public class NumberIntComponent implements Component {
 
     private final Minecraft mc = Minecraft.getMinecraft();
     public int x;
@@ -25,12 +25,12 @@ public class NumberComponent implements Component {
     public int height;
     int width;
     int sliderwidth = 0;
-    SettingDouble setting;
+    SettingInteger setting;
     boolean dragging;
     ModuleComponent parent;
     public boolean notVisible = false;
 
-    public NumberComponent(ModuleComponent parent, int x, int y, SettingDouble setting) {
+    public NumberIntComponent(ModuleComponent parent, int x, int y, SettingInteger setting) {
         this.x = x;
         this.y = y;
         this.width = 88;
@@ -41,12 +41,12 @@ public class NumberComponent implements Component {
     }
 
     private void updateSlider(int mouseX) {
-        double diff = Math.min(width, Math.max(0, mouseX - x));
+        int diff = Math.min(width, Math.max(0, mouseX - x));
 
-        double min = setting.getMinValue();
-        double max = setting.getMaxValue();
+        int min = setting.getMinValue();
+        int max = setting.getMaxValue();
 
-        sliderwidth = (int) (setting.getValue() * width / max);
+        sliderwidth =  (setting.getValue() * width / max);
 
         if (dragging) {
             if (diff == 0) {

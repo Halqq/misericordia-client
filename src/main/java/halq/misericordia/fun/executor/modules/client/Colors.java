@@ -23,6 +23,7 @@ public class Colors extends Module {
     SettingInteger saturation = create("Saturation", 60, 1, 100);
     SettingInteger brightness = create("Brightness", 100, 1, 100);
     SettingInteger speed = create("Speed", 40, 1, 100);
+
     public Colors() {
         super("Colors", Category.OTHER);
     }
