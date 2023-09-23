@@ -195,9 +195,6 @@ public class CrystalAuraModule extends Module implements Runnable {
 
     public void caPlace() {
         crystalPosCalc = CrystalAuraCalcs.calculatePositions(targetPlayer);
-        long currentTime = System.currentTimeMillis();
-        int currentPing = getPing();
-        int maxDelay = calculateMaxDelay(currentPing);
 
         if (rotations.getValue()) {
             switch (rotateMode.getValue()) {
@@ -219,7 +216,6 @@ public class CrystalAuraModule extends Module implements Runnable {
                         if (handAnimations.getValue()) {
                             mc.player.swingArm(getHand());
                         }
-                        lastPacketTime = currentTime;
                     break;
             }
         }

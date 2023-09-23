@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Halq
@@ -49,14 +50,15 @@ public class CrystalAuraCalcs implements Minecraftable {
 
     public static CrystalAuraCalcPos.CalcPos calculatePositions(EntityPlayer target) {
         CrystalAuraCalcPos.CalcPos posToReturn = new CrystalAuraCalcPos.CalcPos(BlockPos.ORIGIN, 0.5f);
-        if(target != null){
-        for (BlockPos pos : getSphere((new BlockPos(Math.floor(mc.player.posX), Math.floor(mc.player.posY), Math.floor(mc.player.posZ))), CrystalAuraModule.INSTANCE.range.getValue().intValue(), (int) CrystalAuraModule.INSTANCE.range.getValue().intValue(), false, true, 0)) {
-            float targetDamage = CrystalAuraCalcDamage.calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, target, true);
-            float selfDamage = CrystalAuraCalcDamage.calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, mc.player, true);
-            if (canPlaceCrystal(pos, true)) {
-                posToReturn = new CrystalAuraCalcPos.CalcPos(pos, targetDamage);
+        if(target != null) {
+                for (BlockPos pos : getSphere((new BlockPos(Math.floor(mc.player.posX), Math.floor(mc.player.posY), Math.floor(mc.player.posZ))), CrystalAuraModule.INSTANCE.range.getValue().intValue(), (int) CrystalAuraModule.INSTANCE.range.getValue().intValue(), false, true, 0).stream().filter(pos -> canPlaceCrystal(pos, true)).collect(Collectors.toList())) {
+                    if (mc.player.getDistance(pos.getX() + 0.5f, pos.getY() + 1.0f, pos.getZ() + 0.5f) > square(CrystalAuraModule.INSTANCE.range.getValue())) continue;
+                    float targetDamage = CrystalAuraCalcDamage.calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, target, true);
+                    float selfDamage = CrystalAuraCalcDamage.calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, mc.player, true);
+                    if (selfDamage > CrystalAuraModule.INSTANCE.maxDmg.getValue()) continue;
+                    if (targetDamage < CrystalAuraModule.INSTANCE.minDmg.getValue()) continue;
+                    posToReturn = new CrystalAuraCalcPos.CalcPos(pos, targetDamage);
             }
-        }
         }
         return posToReturn;
     }
@@ -68,13 +70,17 @@ public class CrystalAuraCalcs implements Minecraftable {
                 if (mc.world.getBlockState(blockPos).getBlock() != Blocks.BEDROCK && mc.world.getBlockState(blockPos).getBlock() != Blocks.OBSIDIAN) {
                     return false;
                 }
-                if (mc.world.getBlockState(boost).getBlock() != Blocks.AIR) {
+                if (mc.world.getBlockState(boost).getBlock() != Blocks.AIR || mc.world.getBlockState(boost2).getBlock() != Blocks.AIR) {
                     return false;
                 }
                 if (!specialEntityCheck) {
-                    return mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost)).isEmpty();
+                    return mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost)).isEmpty() && mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2)).isEmpty();
                 }
                 for (Entity entity : mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost))) {
+                    if (entity instanceof EntityEnderCrystal) continue;
+                    return false;
+                }
+                for (Entity entity : mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2))) {
                     if (entity instanceof EntityEnderCrystal) continue;
                     return false;
                 }

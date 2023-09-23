@@ -45,7 +45,6 @@ public class ClickGuiScreen extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawDefaultBackground();
-        particles.draw(mouseX, mouseY);
         for (CategoryComponent c : components) {
             c.render(mouseX, mouseY);
         }
@@ -84,7 +83,6 @@ public class ClickGuiScreen extends GuiScreen {
 
     @Override
     public void initGui() {
-
         for (CategoryComponent c : components) {
             c.x = c.closedX;
             c.y = c.closedY;
@@ -99,6 +97,11 @@ public class ClickGuiScreen extends GuiScreen {
             c.closedY = c.y;
             c.renderY = 0;
         }
+    }
+
+    @Override
+    public boolean doesGuiPauseGame() {
+        return false;
     }
 
     @Override
