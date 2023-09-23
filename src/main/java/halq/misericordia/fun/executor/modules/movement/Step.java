@@ -12,7 +12,6 @@ import halq.misericordia.fun.utils.Minecraftable;
 public class Step extends Module {
     
         public static Step INSTANCE;
-
         public Step() {
             super("Step", Category.MOVEMENT);
             INSTANCE = this;

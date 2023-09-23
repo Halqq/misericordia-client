@@ -4,6 +4,7 @@ import halq.misericordia.fun.core.modulecore.Category;
 import halq.misericordia.fun.gui.guibars.ClickBar;
 import halq.misericordia.fun.gui.guibars.RenderBar;
 import halq.misericordia.fun.gui.igui.components.category.CategoryComponent;
+import halq.misericordia.fun.gui.igui.components.modoptionstab.ModOptionsTab;
 import halq.misericordia.fun.gui.igui.components.particles.Particles;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Mouse;
@@ -107,7 +108,11 @@ public class ClickGuiScreen extends GuiScreen {
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         for (CategoryComponent c : components) {
-            c.keyTyped(typedChar, keyCode);
+            if(CategoryComponent.modOptionsOpen){
+                ModOptionsTab.INSTANCE.keyTyped(typedChar, keyCode);
+            } else {
+                c.keyTyped(typedChar, keyCode);
+            }
         }
         super.keyTyped(typedChar, keyCode);
     }
