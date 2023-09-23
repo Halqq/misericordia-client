@@ -21,13 +21,15 @@ public class CrystalAuraSettings {
         ca.minHealth.setVisible(cat.getValue().equalsIgnoreCase("Place"));
         ca.ppt.setVisible(cat.getValue().equalsIgnoreCase("Place"));
         ca.placeMode.setVisible(cat.getValue().equalsIgnoreCase("Place"));
-        ca.range.setVisible(cat.getValue().equalsIgnoreCase("Place"));
+        ca.placeRange.setVisible(cat.getValue().equalsIgnoreCase("Place"));
+        ca.playerRange.setVisible(cat.getValue().equalsIgnoreCase("Place"));
 
         /** ------------------------------------  BREAK  ---------------------------------------**/
         ca.breakCrystal.setVisible(cat.getValue().equalsIgnoreCase("Break"));
         ca.attackPredict.setVisible(cat.getValue().equalsIgnoreCase("Break"));
         ca.apt.setVisible(cat.getValue().equalsIgnoreCase("Break"));
         ca.breakMode.setVisible(cat.getValue().equalsIgnoreCase("Break"));
+        ca.breakRange.setVisible(cat.getValue().equalsIgnoreCase("Break"));
 
         /** ------------------------------------  AUTOSWITCH  ---------------------------------**/
         ca.autoSwitch.setVisible(cat.getValue().equalsIgnoreCase("AutoSwitch"));

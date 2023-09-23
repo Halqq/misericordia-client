@@ -9,7 +9,6 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.init.MobEffects;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.CombatRules;
 import net.minecraft.util.DamageSource;
@@ -61,15 +60,20 @@ public class CrystalAuraCalcs implements Minecraftable {
 
     public static CrystalAuraCalcPos.CalcPos calculatePositions(EntityPlayer target) {
         CrystalAuraCalcPos.CalcPos posToReturn = new CrystalAuraCalcPos.CalcPos(BlockPos.ORIGIN, 0.5f);
-        if(target != null) {
-                for (BlockPos pos : getSphere((new BlockPos(Math.floor(mc.player.posX), Math.floor(mc.player.posY), Math.floor(mc.player.posZ))), CrystalAuraModule.INSTANCE.range.getValue().intValue(), (int) CrystalAuraModule.INSTANCE.range.getValue().intValue(), false, true, 0).stream().filter(pos -> canPlaceCrystal(pos, true)).collect(Collectors.toList())) {
-                    if (mc.player.getDistance(pos.getX() + 0.5f, pos.getY() + 1.0f, pos.getZ() + 0.5f) > square(CrystalAuraModule.INSTANCE.range.getValue())) continue;
+        float maxDamage = 0.0f;
+        if (target != null) {
+            if (mc.player.getDistance(target) <= CrystalAuraModule.INSTANCE.playerRange.getValue())
+                for (BlockPos pos : getSphere(new BlockPos(Math.floor(mc.player.posX), Math.floor(mc.player.posY), Math.floor(mc.player.posZ)), CrystalAuraModule.INSTANCE.placeRange.getValue().intValue(), CrystalAuraModule.INSTANCE.placeRange.getValue().intValue(), false, true, 0).stream().filter(pos -> canPlaceCrystal(pos, true)).collect(Collectors.toList())) {
+                    if (mc.player.getDistance(pos.getX() + 0.5f, pos.getY() + 1.0f, pos.getZ() + 0.5f) > square(CrystalAuraModule.INSTANCE.placeRange.getValue()))
+                        continue;
                     float targetDamage = calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, target, true);
                     float selfDamage = calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, mc.player, true);
-                    if (selfDamage > CrystalAuraModule.INSTANCE.maxDmg.getValue()) continue;
-                    if (targetDamage < CrystalAuraModule.INSTANCE.minDmg.getValue()) continue;
+
+                    if (selfDamage <= CrystalAuraModule.INSTANCE.maxDmg.getValue() && targetDamage > maxDamage) {
+                        maxDamage = targetDamage;
                     posToReturn = new CrystalAuraCalcPos.CalcPos(pos, targetDamage);
-            }
+                    }
+                }
         }
         return posToReturn;
     }

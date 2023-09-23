@@ -10,6 +10,7 @@ import halq.misericordia.fun.executor.modules.combat.crystalaura.calcs.CrystalAu
 import halq.misericordia.fun.executor.modules.combat.crystalaura.calcs.CrystalAuraCalcs;
 import halq.misericordia.fun.executor.settings.*;
 import halq.misericordia.fun.utils.utils.TimerUtil;
+import net.minecraft.client.network.ServerPinger;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.entity.player.EntityPlayer;
@@ -57,7 +58,10 @@ public class CrystalAuraModule extends Module implements Runnable {
     public SettingBoolean pauseOnGap = create("PauseGap", false, false);
     public SettingBoolean pauseOnXp = create("PauseOnXp", false, false);
     public SettingDouble minHealth = create("MinHealth", 36.0, 0.0, 36.0, false);
-    public SettingDouble range = create("Range", 4.0, 0.0, 6.0, false);
+    public SettingDouble placeRange = create("PlaceRange", 4.0, 0.0, 6.0, false);
+    public SettingDouble breakRange = create("BreakRange", 4.0, 0.0, 6.0, false);
+    public SettingDouble playerRange = create("PlayerRange", 4.0, 0.0, 6.0, false);
+
     public SettingDouble minDmg = create("MinDmg", 4.0, 0.0, 36.0, false);
     public SettingDouble maxDmg = create("MaxSelfDmg", 0.0, 0.0, 36.0, false);
     public SettingInteger ppt = create("PPT", 2, 0, 10, false);
@@ -195,6 +199,9 @@ public class CrystalAuraModule extends Module implements Runnable {
 
     public void caPlace() {
         crystalPosCalc = CrystalAuraCalcs.calculatePositions(targetPlayer);
+        long currentTime = System.currentTimeMillis();
+        int currentPing = getPing();
+        int maxDelay = calculateMaxDelay(currentPing);
 
         if (rotations.getValue()) {
             switch (rotateMode.getValue()) {
@@ -207,15 +214,17 @@ public class CrystalAuraModule extends Module implements Runnable {
         }
 
         if (crystalPosCalc.getBlockPos() != BlockPos.ORIGIN) {
+
             switch (placeMode.getValue()) {
                 case "Normal":
                     mc.playerController.processRightClickBlock(mc.player, mc.world, crystalPosCalc.getBlockPos(), EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
                     break;
                 case "Packet":
-                        mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(crystalPosCalc.getBlockPos(), EnumFacing.UP, EnumHand.MAIN_HAND, 0, 0, 0));
-                        if (handAnimations.getValue()) {
-                            mc.player.swingArm(getHand());
-                        }
+                    mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(crystalPosCalc.getBlockPos(), EnumFacing.UP, EnumHand.MAIN_HAND, 0, 0, 0));
+                    if (handAnimations.getValue()) {
+                        mc.player.swingArm(getHand());
+                    }
+                    lastPacketTime = currentTime;
                     break;
             }
         }

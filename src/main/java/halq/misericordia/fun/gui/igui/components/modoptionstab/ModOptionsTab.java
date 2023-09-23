@@ -73,9 +73,29 @@ public class ModOptionsTab implements Component {
                     Gui.drawRect(currentX, 49, currentX + 140, 50 + mc.fontRenderer.FONT_HEIGHT, new Color(255, 255, 255, 100).getRGB());
                 }
 
+                if (mouseX >= currentX && mouseX <= currentX + 140 && mouseY >= 59 && mouseY <= 60 + mc.fontRenderer.FONT_HEIGHT && !ColorOptions.RED.bool) {
+                    Gui.drawRect(currentX, 59, currentX + 140, 60 + mc.fontRenderer.FONT_HEIGHT, new Color(255, 255, 255, 100).getRGB());
+                }
+
+                if (mouseX >= currentX && mouseX <= currentX + 140 && mouseY >= 69 && mouseY <= 70 + mc.fontRenderer.FONT_HEIGHT && !ColorOptions.GREEN.bool) {
+                    Gui.drawRect(currentX, 69, currentX + 140, 70 + mc.fontRenderer.FONT_HEIGHT, new Color(255, 255, 255, 100).getRGB());
+                }
+
+                if (mouseX >= currentX && mouseX <= currentX + 140 && mouseY >= 79 && mouseY <= 80 + mc.fontRenderer.FONT_HEIGHT && !ColorOptions.BLUE.bool) {
+                    Gui.drawRect(currentX, 79, currentX + 140, 80 + mc.fontRenderer.FONT_HEIGHT, new Color(255, 255, 255, 100).getRGB());
+                }
+
+                if (mouseX >= currentX && mouseX <= currentX + 140 && mouseY >= 89 && mouseY <= 90 + mc.fontRenderer.FONT_HEIGHT && !ColorOptions.ALPHA.bool) {
+                    Gui.drawRect(currentX, 89, currentX + 140, 90 + mc.fontRenderer.FONT_HEIGHT, new Color(255, 255, 255, 100).getRGB());
+                }
+
                 mc.fontRenderer.drawString("ColorSync (all modules)", currentX + 5, 30, new Color(255, 255, 255, 255).getRGB());
                 mc.fontRenderer.drawString("Rainbow", currentX + 5, 40, new Color(255, 255, 255, 255).getRGB());
                 mc.fontRenderer.drawString("Rainbow Speed   " + ColorOptions.RAINBOWSPEED.value, currentX + 5, 50, new Color(255, 255, 255, 255).getRGB());
+                mc.fontRenderer.drawString("Red   " + ColorOptions.RED.value, currentX + 5, 60, new Color(255, 255, 255, 255).getRGB());
+                mc.fontRenderer.drawString("Green   " + ColorOptions.GREEN.value, currentX + 5, 70, new Color(255, 255, 255, 255).getRGB());
+                mc.fontRenderer.drawString("Blue   " + ColorOptions.BLUE.value, currentX + 5, 80, new Color(255, 255, 255, 255).getRGB());
+                mc.fontRenderer.drawString("Alpha   " + ColorOptions.ALPHA.value, currentX + 5, 90, new Color(255, 255, 255, 255).getRGB());
                 break;
         }
     }

@@ -44,6 +44,7 @@ public class ConfigManager {
             saveModuleKeybinds();
             saveCommandPrefix();
             saveFriendsList();
+            //saveAutoGG();
         } catch (IOException ignored) {
         }
     }
@@ -70,7 +71,7 @@ public class ConfigManager {
             if (setting instanceof SettingBoolean) {
                 settingObject.add(setting.getName(), new JsonPrimitive(((SettingBoolean) setting).getValue()));
             } else if (setting instanceof SettingColor) {
-                saveSettingColor((SettingColor) setting, settingObject);
+
             } else if (setting instanceof SettingDouble) {
                 settingObject.add(setting.getName(), new JsonPrimitive(((SettingDouble) setting).getValue()));
             } else if (setting instanceof SettingInteger) {

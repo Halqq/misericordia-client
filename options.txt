@@ -17,7 +17,7 @@ ao:0
 renderClouds:false
 resourcePacks:[]
 incompatibleResourcePacks:[]
-lastServer:ssn.gg
+lastServer:0.0.0.0
 lang:en_us
 chatVisibility:0
 chatColors:true
