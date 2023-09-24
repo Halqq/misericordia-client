@@ -5,6 +5,7 @@ import halq.misericordia.fun.core.modulecore.Category;
 import halq.misericordia.fun.core.modulecore.Module;
 import halq.misericordia.fun.executor.settings.SettingBoolean;
 import halq.misericordia.fun.executor.settings.SettingDouble;
+import halq.misericordia.fun.executor.settings.SettingInteger;
 import halq.misericordia.fun.executor.settings.SettingMode;
 import halq.misericordia.fun.utils.Minecraftable;
 import halq.misericordia.fun.utils.utils.MessageUtil;
@@ -30,8 +31,10 @@ public class AutoTrap extends Module {
     SettingBoolean disable = create("AutoDisable", false);
     SettingMode switchMode = create("AutoSwitchMode", "Normal", Arrays.asList("Normal", "Silent"));
     SettingBoolean autoSwitch = create("AutoSwitch", true);
+    SettingInteger blocksPerTick = create("BlocksPerTick", 4, 0, 5);
     int oldSlot;
     EntityPlayer target;
+    private int blocksPlacedThisTick = 0;
 
 
     public AutoTrap() {
@@ -67,11 +70,17 @@ public class AutoTrap extends Module {
                         Minecraftable.mc.player.rotationYaw = getRotations(target)[0];
                         Minecraftable.mc.player.rotationPitch = getRotations(target)[1];
                     }
+
                     for (BlockPos blockPos : fullTrap) {
+                        if (blocksPlacedThisTick >= blocksPerTick.getValue()) {
+                            break; // Já atingimos o limite de blocos a serem colocados neste tick
+                        }
+
                         targetPos = new BlockPos(
                                 target.posX + blockPos.getX(),
                                 target.posY + blockPos.getY(),
                                 target.posZ + blockPos.getZ());
+
                         if (targetPos != null) {
                             switch (placeMode.getValue()) {
                                 case "Packet":
@@ -81,16 +90,13 @@ public class AutoTrap extends Module {
                                     mc.playerController.processRightClickBlock(mc.player, mc.world, targetPos, EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
                                     break;
                             }
+                            blocksPlacedThisTick++;
                         }
                     }
                 } else {
                     MessageUtil.sendMessage(ChatFormatting.DARK_PURPLE + "AutoTrap: " + ChatFormatting.GRAY + "No obsidian in hotbar! Disabling...");
                     this.setDisabled();
                 }
-            }
-
-            if (disable.getValue()) {
-                this.setDisabled();
             }
         }
     }
@@ -136,6 +142,7 @@ public class AutoTrap extends Module {
         if (autoSwitch.getValue()) {
             swapToHotbarSlot(oldSlot);
         }
+        blocksPlacedThisTick = 0; // Reseta o contador quando o módulo é ativado
     }
 
     public BlockPos[] getTrapMode(){
