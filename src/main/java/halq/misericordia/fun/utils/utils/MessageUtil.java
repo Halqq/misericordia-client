@@ -49,7 +49,7 @@ public class MessageUtil implements Minecraftable {
     }
 
     public static void sendMessage(String message) {
-        sendSilentMessage("<" + getWatermark() + "> " + ChatFormatting.RESET + ChatFormatting.GRAY + message);
+        sendSilentMessage("[" + ChatFormatting.DARK_RED + "Misericordia" + ChatFormatting.GRAY + "] " + ChatFormatting.RESET + ChatFormatting.GRAY + message);
     }
 
     public static void sendSilentMessage(String message) {

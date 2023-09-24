@@ -166,9 +166,10 @@ public class CrystalAuraModule extends Module implements Runnable {
 
     @Override
     public void onUpdate() {
+
         for (EntityPlayer player : mc.world.playerEntities) {
             if (player != mc.player) {
-                targetPlayer = player;
+                    targetPlayer = player;
             }
         }
 

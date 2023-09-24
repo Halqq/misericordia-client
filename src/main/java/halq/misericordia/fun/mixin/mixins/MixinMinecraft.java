@@ -34,7 +34,7 @@ public class MixinMinecraft {
     @Inject(method={"runTick()V"}, at={@At(value="RETURN")})
     private void runTick(CallbackInfo callbackInfo) {
         if (Minecraft.getMinecraft().currentScreen instanceof GuiMainMenu) {
-            Minecraft.getMinecraft().displayGuiScreen((GuiScreen)new GuiMainMenuScreen());
+           // Minecraft.getMinecraft().displayGuiScreen((GuiScreen)new GuiMainMenuScreen());
 
         }
     }
@@ -42,7 +42,7 @@ public class MixinMinecraft {
     @Inject(method={"displayGuiScreen"}, at={@At(value="HEAD")})
     private void displayGuiScreen(GuiScreen screen, CallbackInfo ci) {
         if (screen instanceof GuiMainMenu) {
-            this.displayGuiScreen(new GuiMainMenuScreen(), ci);
+          //  this.displayGuiScreen(new GuiMainMenuScreen(), ci);
         }
     }
 }

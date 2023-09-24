@@ -1,8 +1,8 @@
 package halq.misericordia.fun.executor.modules.combat.surround;
 
-import halq.misericordia.fun.events.RenderEvent;
 import halq.misericordia.fun.core.modulecore.Category;
 import halq.misericordia.fun.core.modulecore.Module;
+import halq.misericordia.fun.events.RenderEvent;
 import halq.misericordia.fun.executor.settings.SettingBoolean;
 import halq.misericordia.fun.executor.settings.SettingDouble;
 import halq.misericordia.fun.executor.settings.SettingMode;
