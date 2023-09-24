@@ -98,6 +98,9 @@ public class AutoTrap extends Module {
                     this.setDisabled();
                 }
             }
+            if (disable.getValue()) {
+                this.setDisabled();
+            }
         }
     }
 
