@@ -49,7 +49,7 @@ public class CrystalAuraRender implements Minecraftable {
 
             RenderUtil.drawGradientFilledBox(bb, color, color2);
             RenderUtil.drawEspOutline(bb, color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha(), 1.5f);
-            drawText3D(pos,"DMG: " + dmg, Color.WHITE.getRGB());
+            //drawText3D(pos,"DMG: " + dmg, Color.WHITE.getRGB());
         }
     }
 

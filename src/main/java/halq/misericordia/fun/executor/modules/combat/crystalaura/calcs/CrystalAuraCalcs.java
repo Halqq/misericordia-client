@@ -2,6 +2,7 @@ package halq.misericordia.fun.executor.modules.combat.crystalaura.calcs;
 
 import halq.misericordia.fun.executor.modules.combat.crystalaura.module.CrystalAuraModule;
 import halq.misericordia.fun.utils.Minecraftable;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -59,49 +60,89 @@ public class CrystalAuraCalcs implements Minecraftable {
     }
 
     public static CrystalAuraCalcPos.CalcPos calculatePositions(EntityPlayer target) {
-        CrystalAuraCalcPos.CalcPos posToReturn = new CrystalAuraCalcPos.CalcPos(BlockPos.ORIGIN, 0.5f);
+        CrystalAuraModule crystalAuraModule = CrystalAuraModule.INSTANCE;
+        double playerRangeValue = crystalAuraModule.playerRange.getValue();
+        double placeRangeValue = crystalAuraModule.placeRange.getValue();
         float maxDamage = 0.0f;
-        if (target != null) {
-            if (mc.player.getDistance(target) <= CrystalAuraModule.INSTANCE.playerRange.getValue())
-                for (BlockPos pos : getSphere(new BlockPos(Math.floor(mc.player.posX), Math.floor(mc.player.posY), Math.floor(mc.player.posZ)), CrystalAuraModule.INSTANCE.placeRange.getValue().intValue(), CrystalAuraModule.INSTANCE.placeRange.getValue().intValue(), false, true, 0).stream().filter(pos -> canPlaceCrystal(pos, true)).collect(Collectors.toList())) {
-                    if (mc.player.getDistance(pos.getX() + 0.5f, pos.getY() + 1.0f, pos.getZ() + 0.5f) > square(CrystalAuraModule.INSTANCE.placeRange.getValue()))
-                        continue;
-                    float targetDamage = calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, target, true);
-                    float selfDamage = calculateDamage(mc.world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, mc.player, true);
+        CrystalAuraCalcPos.CalcPos posToReturn = new CrystalAuraCalcPos.CalcPos(BlockPos.ORIGIN, 0.5f);
 
-                    if (selfDamage <= CrystalAuraModule.INSTANCE.maxDmg.getValue() && targetDamage > maxDamage) {
-                        maxDamage = targetDamage;
-                    posToReturn = new CrystalAuraCalcPos.CalcPos(pos, targetDamage);
-                    }
+        if (target != null && mc.player.getDistance(target) <= playerRangeValue) {
+            double playerPosX = mc.player.posX;
+            double playerPosY = mc.player.posY;
+            double playerPosZ = mc.player.posZ;
+            BlockPos playerPos = new BlockPos((int) playerPosX, (int) playerPosY, (int) playerPosZ);
+            int placeRangeValueInt = (int) placeRangeValue;
+            List<BlockPos> spherePositions = getSphere(playerPos, placeRangeValueInt, placeRangeValueInt, false, true, 0);
+
+            double placeRangeSquare = square(placeRangeValue);
+
+            for (BlockPos pos : spherePositions) {
+                double posXPlusHalf = pos.getX() + 0.5;
+                double posYPlusOne = pos.getY() + 1.0;
+                double posZPlusHalf = pos.getZ() + 0.5;
+
+                if (mc.player.getDistanceSq(posXPlusHalf, posYPlusOne, posZPlusHalf) > placeRangeSquare) {
+                    continue;
                 }
+
+                if (!canPlaceCrystal(pos, true)) {
+                    continue;
+                }
+
+                float targetDamage = calculateDamage(mc.world, posXPlusHalf, posYPlusOne, posZPlusHalf, target, true);
+                float selfDamage = calculateDamage(mc.world, posXPlusHalf, posYPlusOne, posZPlusHalf, mc.player, true);
+
+                if (selfDamage <= crystalAuraModule.maxDmg.getValue() && targetDamage > maxDamage) {
+                    maxDamage = targetDamage;
+                    posToReturn = new CrystalAuraCalcPos.CalcPos(pos, targetDamage);
+                }
+            }
         }
+
         return posToReturn;
     }
 
     private static boolean canPlaceCrystal(BlockPos blockPos, boolean specialEntityCheck) {
         BlockPos boost = blockPos.add(0, 1, 0);
         BlockPos boost2 = blockPos.add(0, 2, 0);
+
         try {
-                if (mc.world.getBlockState(blockPos).getBlock() != Blocks.BEDROCK && mc.world.getBlockState(blockPos).getBlock() != Blocks.OBSIDIAN) {
-                    return false;
+            IBlockState blockState = mc.world.getBlockState(blockPos);
+            IBlockState boostBlockState = mc.world.getBlockState(boost);
+            IBlockState boost2BlockState = mc.world.getBlockState(boost2);
+
+            if (blockState.getBlock() != Blocks.BEDROCK && blockState.getBlock() != Blocks.OBSIDIAN) {
+                return false;
+            }
+
+            if (boostBlockState.getBlock() != Blocks.AIR || boost2BlockState.getBlock() != Blocks.AIR) {
+                return false;
+            }
+
+            List<Entity> entitiesAtBoost = mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost));
+            List<Entity> entitiesAtBoost2 = mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2));
+
+            if (!specialEntityCheck) {
+                return entitiesAtBoost.isEmpty() && entitiesAtBoost2.isEmpty();
+            }
+
+            for (Entity entity : entitiesAtBoost) {
+                if (entity instanceof EntityEnderCrystal) {
+                    continue;
                 }
-                if (mc.world.getBlockState(boost).getBlock() != Blocks.AIR || mc.world.getBlockState(boost2).getBlock() != Blocks.AIR) {
-                    return false;
+                return false;
+            }
+
+            for (Entity entity : entitiesAtBoost2) {
+                if (entity instanceof EntityEnderCrystal) {
+                    continue;
                 }
-                if (!specialEntityCheck) {
-                    return mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost)).isEmpty() && mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2)).isEmpty();
-                }
-                for (Entity entity : mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost))) {
-                    if (entity instanceof EntityEnderCrystal) continue;
-                    return false;
-                }
-                for (Entity entity : mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2))) {
-                    if (entity instanceof EntityEnderCrystal) continue;
-                    return false;
-                }
+                return false;
+            }
         } catch (Exception ignored) {
             return false;
         }
+
         return true;
     }
 
@@ -115,20 +156,27 @@ public class CrystalAuraCalcs implements Minecraftable {
 
     public static float calculateDamage(double posX, double posY, double posZ, Entity entity) {
         float doubleExplosionSize = 12.0f;
-        double distancedsize = entity.getDistance(posX, posY, posZ) / 12.0;
+        double distance = entity.getDistance(posX, posY, posZ);
+        double distancedSize = distance / doubleExplosionSize;
         Vec3d vec3d = new Vec3d(posX, posY, posZ);
         double blockDensity = 0.0;
+
         try {
             blockDensity = entity.world.getBlockDensity(vec3d, entity.getEntityBoundingBox());
-        } catch (Exception exception) {
-            // empty catch block
+        } catch (Exception ex) {
+            // Log the exception if needed
         }
-        double v = (1.0 - distancedsize) * blockDensity;
-        float damage = (int) ((v * v + v) / 2.0 * 7.0 * 12.0 + 1.0);
+
+        double v = (1.0 - distancedSize) * blockDensity;
+        float damage = (float) ((v * v + v) / 2.0 * 7.0 * doubleExplosionSize + 1.0);
         double finald = 1.0;
+
         if (entity instanceof EntityLivingBase) {
-            finald = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(damage), new Explosion(mc.world, null, posX, posY, posZ, 6.0f, false, true));
+            float damageMultiplied = getDamageMultiplied(damage);
+            Explosion explosion = new Explosion(mc.world, null, posX, posY, posZ, 6.0f, false, true);
+            finald = getBlastReduction((EntityLivingBase) entity, damageMultiplied, explosion);
         }
+
         return (float) finald;
     }
 

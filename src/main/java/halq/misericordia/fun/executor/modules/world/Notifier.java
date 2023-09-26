@@ -23,7 +23,7 @@ public class Notifier extends Module {
     SettingBoolean totempop = create("TotemPop", true);
     SettingBoolean totempopplayer = create("TotemPopOtherPlayer", false, totempop.getValue());
     SettingBoolean surround = create("Surround", true);
-
+    //make predict id
     public Notifier() {
         super("Notifier", Category.WORLD);
         INSTANCE = this;

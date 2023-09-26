@@ -10,34 +10,35 @@ import halq.misericordia.fun.executor.modules.combat.crystalaura.calcs.CrystalAu
 import halq.misericordia.fun.executor.modules.combat.crystalaura.calcs.CrystalAuraCalcs;
 import halq.misericordia.fun.executor.settings.*;
 import halq.misericordia.fun.utils.utils.TimerUtil;
-import net.minecraft.client.network.ServerPinger;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
-import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.network.play.client.CPacketUseEntity;
-import net.minecraft.network.play.server.SPacketSoundEffect;
+import net.minecraft.network.play.server.SPacketSpawnObject;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Halq
  * @since 10/06/2023 at 03:55
  */
 
-public class CrystalAuraModule extends Module implements Runnable {
+public class CrystalAuraModule extends Module {
 
     public static CrystalAuraModule INSTANCE;
     public static CrystalAuraCalcPos.CalcPos crystalPosCalc = new CrystalAuraCalcPos.CalcPos(BlockPos.ORIGIN, 0);
@@ -79,13 +80,17 @@ public class CrystalAuraModule extends Module implements Runnable {
     Thread thread;
     BlockPos finalPos;
     float targetDMG;
-    long lastPacketTime = 0;
-
-
+    private static int predictID = 0;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(4);
+    boolean isPredictedBreak = false;
 
     public CrystalAuraModule() {
         super("CrystalAura", Category.COMBAT);
         INSTANCE = this;
+    }
+
+    private List<BlockPos> convertCalcPosToList(CrystalAuraCalcPos.CalcPos calcPos) {
+        return Collections.singletonList(calcPos.getBlockPos());
     }
 
     @Override
@@ -98,78 +103,12 @@ public class CrystalAuraModule extends Module implements Runnable {
         crystalPosCalc = new CrystalAuraCalcPos.CalcPos(BlockPos.ORIGIN, 0);
     }
 
-    @SubscribeEvent
-    public void onPacketReceive(PacketEvent.PacketReceiveEvent event) {
-        if (event.getPacket() instanceof SPacketSoundEffect) {
-            final SPacketSoundEffect packet = (SPacketSoundEffect) event.getPacket();
-            if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
-                for (Entity e : mc.world.loadedEntityList) {
-                    if (e instanceof EntityEnderCrystal) {
-                        if (e.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f) {
-                            e.setDead();
-                        }
-                    }
-                }
-            }
-
-            if (place.getValue()) {
-                if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
-                    for (Entity e : mc.world.loadedEntityList) {
-                        if (e instanceof EntityEnderCrystal) {
-                            if (e.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f) {
-                                e.setDead();
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (breakCrystal.getValue()) {
-                if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
-                    for (Entity e : mc.world.loadedEntityList) {
-                        if (e instanceof EntityEnderCrystal) {
-                            if (e.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f) {
-                                e.setDead();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (event.getPacket() instanceof CPacketUseEntity) {
-            final CPacketUseEntity packet = (CPacketUseEntity) event.getPacket();
-            if (packet.getAction() == CPacketUseEntity.Action.ATTACK) {
-                if (packet.getEntityFromWorld(mc.world) instanceof EntityEnderCrystal) {
-                    if (attackPredict.getValue()) {
-                        if (targetPlayer != null) {
-                            if (targetPlayer.getDistance(packet.getEntityFromWorld(mc.world)) <= 6.0f) {
-                                targetPlayer = null;
-                                return;
-                            }
-                        }
-                    }
-                    if (breakCrystal.getValue()) {
-                        if (multiThread.getValue()) {
-                            if (thread == null) {
-                                thread = new Thread(this);
-                                thread.start();
-                            }
-                        } else {
-                            caAttack();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     @Override
     public void onUpdate() {
 
         for (EntityPlayer player : mc.world.playerEntities) {
             if (player != mc.player) {
-                    targetPlayer = player;
+                targetPlayer = player;
             }
         }
 
@@ -180,29 +119,21 @@ public class CrystalAuraModule extends Module implements Runnable {
             return;
 
         if (breakCrystal.getValue()) {
-            new Thread(() -> {
-                synchronized (CrystalAuraModule.this) {
-                    for (int i = 0; i < apt.getValue(); i++) {
-                        caAttack();
-                    }
-                }
-            }).start();
+            startAsyncAttack();
         }
 
         if (place.getValue()) {
             caPlace();
         }
-
-        if (attackPredict.getValue()) {
-            new Thread(CrystalAuraPredict::caAttackPredict).start();
-        }
     }
 
-    public void caPlace() {
-        crystalPosCalc = CrystalAuraCalcs.calculatePositions(targetPlayer);
-        long currentTime = System.currentTimeMillis();
-        int currentPing = getPing();
-        int maxDelay = calculateMaxDelay(currentPing);
+    private void caPlace() {
+        CrystalAuraCalcPos.CalcPos crystalPosCalc = CrystalAuraCalcs.calculatePositions(targetPlayer);
+        List<BlockPos> crystalPositions = convertCalcPosToList(crystalPosCalc);
+
+        BlockPos crystalBlockPos = crystalPositions.get(0);
+        List<CPacketPlayerTryUseItemOnBlock> packets = new ArrayList<>();
+
 
         if (rotations.getValue()) {
             switch (rotateMode.getValue()) {
@@ -214,51 +145,133 @@ public class CrystalAuraModule extends Module implements Runnable {
             }
         }
 
-        if (crystalPosCalc.getBlockPos() != BlockPos.ORIGIN) {
-
+        if (crystalBlockPos != BlockPos.ORIGIN) {
             switch (placeMode.getValue()) {
                 case "Normal":
-                    mc.playerController.processRightClickBlock(mc.player, mc.world, crystalPosCalc.getBlockPos(), EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
+                    mc.playerController.processRightClickBlock(mc.player, mc.world, crystalBlockPos, EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
                     break;
                 case "Packet":
-                    mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(crystalPosCalc.getBlockPos(), EnumFacing.UP, EnumHand.MAIN_HAND, 0, 0, 0));
-                    if (handAnimations.getValue()) {
-                        mc.player.swingArm(getHand());
-                    }
-                    lastPacketTime = currentTime;
+                    packets.add(new CPacketPlayerTryUseItemOnBlock(crystalBlockPos, EnumFacing.UP, EnumHand.MAIN_HAND, 0, 0, 0));
+                    sendCrystalPlacementPacketAsync(packets);
                     break;
             }
         }
+
         finalPos = crystalPosCalc.getBlockPos();
         targetDMG = crystalPosCalc.getTargetDamage();
     }
 
-    private int getPing() {
-        int ping = -1;
 
-        if (mc.player != null && mc.player.connection != null) {
-            ping = mc.player.connection.getPlayerInfo(mc.player.getUniqueID()).getResponseTime();
+    private void sendCrystalPlacementPacketAsync(List<CPacketPlayerTryUseItemOnBlock> packets) {
+        int batchSize = calculateBatchSize(packets.size());
+        int numOfBatches = (int) Math.ceil((double) packets.size() / batchSize);
+        boolean handAnimationsValue = handAnimations.getValue();
+
+        for (int i = 0; i < numOfBatches; i++) {
+            int startIndex = i * batchSize;
+            int endIndex = Math.min((i + 1) * batchSize, packets.size());
+
+            List<CPacketPlayerTryUseItemOnBlock> batch = packets.subList(startIndex, endIndex);
+
+            CompletableFuture.runAsync(() -> {
+
+                for (CPacketPlayerTryUseItemOnBlock packet : batch) {
+                    try {
+                        mc.player.connection.sendPacket(packet);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
-
-        return ping;
+        if (handAnimationsValue) {
+            mc.player.swingArm(EnumHand.MAIN_HAND);
+        }
     }
 
-    private int calculateMaxDelay(int currentPing) {
-        int maxDelay = 0;
+    private int calculateBatchSize(int packetCount) {
+        double desiredPacketRate = 3.0;
+        int minimumBatchSize = 2;
 
-        if (currentPing >= 0) {
-            if(currentPing < 25){
-                maxDelay = 50;
-            } else if (currentPing < 50) {
-                maxDelay = 100;
-            } else if (currentPing < 100) {
-                maxDelay = 150;
-            } else {
-                maxDelay = 300;
+        double batchSize = Math.ceil(packetCount / desiredPacketRate);
+
+        return (int) Math.max(minimumBatchSize, batchSize);
+    }
+
+    @SubscribeEvent
+    public void onPacketReceive(PacketEvent.PacketReceiveEvent event) {
+        if (event.getPacket() instanceof SPacketSpawnObject) {
+            SPacketSpawnObject packet = (SPacketSpawnObject) event.getPacket();
+            if (packet.getType() == 51) {
+                if (mc.player.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6) {
+                    predictID = packet.getEntityID();
+                    isPredictedBreak = false;
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPacketSend(PacketEvent.PacketSendEvent event) {
+        if (event.getPacket() instanceof CPacketUseEntity) {
+            CPacketUseEntity packet = (CPacketUseEntity) event.getPacket();
+            if (packet.getAction() == CPacketUseEntity.Action.ATTACK) {
+                Entity entity = packet.getEntityFromWorld(mc.world);
+                if (entity instanceof EntityEnderCrystal && predictID == entity.getEntityId() && !isPredictedBreak) {
+
+                    sendBreakPacketAsync((EntityEnderCrystal) entity);
+                    // MessageUtil.sendMessage("Predicted!");
+                    isPredictedBreak = true;
+
+                }
+            }
+        }
+    }
+
+    public void startAsyncAttack() {
+        EntityEnderCrystal crystal = (EntityEnderCrystal) findNearestCrystal();
+
+        executorService.execute(() -> {
+            if (crystal != null) {
+                sendBreakPacketAsync(crystal);
+            }
+        });
+    }
+
+    private Entity findNearestCrystal() {
+        double closestDistanceSq = Double.MAX_VALUE;
+        Entity nearestCrystal = null;
+
+        for (Entity entity : mc.world.loadedEntityList) {
+            if (entity instanceof EntityEnderCrystal) {
+                double distanceSq = entity.getDistanceSq(mc.player);
+                if (distanceSq < closestDistanceSq) {
+                    closestDistanceSq = distanceSq;
+                    nearestCrystal = entity;
+                }
             }
         }
 
-        return maxDelay;
+        return nearestCrystal;
+    }
+
+    private void breakCrystal(EntityEnderCrystal crystal) {
+        mc.player.connection.sendPacket(new CPacketUseEntity(crystal));
+
+        if (handAnimations.getValue()) {
+            mc.player.swingArm(getHand());
+        }
+    }
+
+    private void sendBreakPacketAsync(EntityEnderCrystal crystal) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                breakCrystal(crystal);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void switchToSlot(int slot) {
@@ -271,74 +284,6 @@ public class CrystalAuraModule extends Module implements Runnable {
             if (mc.player.inventory.getStackInSlot(i).getItem().getIdFromItem(mc.player.inventory.getStackInSlot(i).getItem()) == Item.getIdFromItem(Items.END_CRYSTAL)) {
                 switchToSlot(i);
                 break;
-            }
-        }
-    }
-
-    public void caAttack() {
-        final EntityEnderCrystal crystal = (EntityEnderCrystal) mc.world.loadedEntityList.stream().filter(entity -> entity instanceof EntityEnderCrystal).min(Comparator.comparing(c -> mc.player.getDistance(c))).orElse(null);
-
-        if (crystal != null) {
-            switch (breakMode.getValue()) {
-                case "Normal":
-                    mc.playerController.attackEntity(mc.player, crystal);
-                    break;
-                case "Packet":
-                    mc.player.connection.sendPacket(new CPacketUseEntity(crystal));
-                    if (handAnimations.getValue()) {
-                        mc.player.swingArm(getHand());
-                    }
-
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onPacketSend(PacketEvent.PacketSendEvent event) {
-        if (event.getPacket() instanceof CPacketUseEntity) {
-            CPacketUseEntity packet = (CPacketUseEntity) event.getPacket();
-            if (packet.getAction() == CPacketUseEntity.Action.ATTACK) {
-                if (packet.getEntityFromWorld(mc.world) instanceof EntityEnderCrystal) {
-                    EntityEnderCrystal crystal = (EntityEnderCrystal) packet.getEntityFromWorld(mc.world);
-                    assert crystal != null;
-                    if (crystal.getDistance(mc.player) <= 6.0f) {
-                        crystal.setDead();
-                        event.setCanceled(true);
-                    }
-                }
-            }
-        }
-
-        if (event.getPacket() instanceof CPacketUseEntity) {
-            if (((CPacketUseEntity) event.getPacket()).getAction() == CPacketUseEntity.Action.ATTACK) {
-                if (((CPacketUseEntity) event.getPacket()).getEntityFromWorld(mc.world) instanceof EntityEnderCrystal) {
-                    if (mc.player.getDistance(((CPacketUseEntity) event.getPacket()).getEntityFromWorld(mc.world)) <= 6.0f) {
-                        event.setCanceled(true);
-                    }
-                }
-            }
-        }
-
-        if (event.getPacket() instanceof CPacketPlayerTryUseItemOnBlock) {
-            CPacketPlayerTryUseItemOnBlock packet = (CPacketPlayerTryUseItemOnBlock) event.getPacket();
-            if (packet.getHand() == EnumHand.MAIN_HAND && packet.getPos().getY() > 1 && packet.getPos().getY() < 255 && mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL) {
-                if (packet.getDirection() == EnumFacing.UP) {
-                    if (packet.getPos().getX() == finalPos.getX() && packet.getPos().getZ() == finalPos.getZ()) {
-                        if (packet.getPos().getY() == finalPos.getY() + 1) {
-                            mc.player.swingArm(EnumHand.MAIN_HAND);
-                        }
-                        if (place.getValue()) {
-                            mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(packet.getPos(), packet.getDirection(), EnumHand.MAIN_HAND, packet.getFacingX(), packet.getFacingY(), packet.getFacingZ()));
-                        }
-                    }
-                }
-            }
-        }
-
-        if (event.getPacket() instanceof CPacketPlayerTryUseItemOnBlock && place.getValue()) {
-            CPacketPlayerTryUseItemOnBlock packet = (CPacketPlayerTryUseItemOnBlock) event.getPacket();
-            if (packet.getHand() == EnumHand.MAIN_HAND && packet.getPos().getY() > 1 && packet.getPos().getY() < 255 && mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL) {
-                event.setCanceled(true);
             }
         }
     }
@@ -384,31 +329,6 @@ public class CrystalAuraModule extends Module implements Runnable {
         float pitch = (float) -Math.toDegrees(Math.atan2(yDiff, distance));
 
         return new float[]{yaw, pitch};
-    }
-
-    @Override
-    public void run() {
-        if (multiThread.getValue()) {
-            newThread();
-        }
-    }
-
-    public void newThread() {
-        for (int i = 0; i <= multiThreadValue.getValue(); i++) {
-            if (threadDelay.passedMs(multiThreadDelay.getValue().longValue())) {
-                if (thread == null || thread.getState() == Thread.State.TERMINATED) {
-                    thread = new Thread(() -> {
-                        synchronized (CrystalAuraModule.this) {
-                            caAttack();
-                        }
-                    });
-                    thread.setName("CrystalAura-" + i);
-                    thread.setPriority(Thread.MAX_PRIORITY);
-                    thread.start();
-                    threadDelay.reset();
-                }
-            }
-        }
     }
 
     @Override
