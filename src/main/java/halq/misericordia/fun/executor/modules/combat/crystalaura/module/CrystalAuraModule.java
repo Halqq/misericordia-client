@@ -10,9 +10,11 @@ import halq.misericordia.fun.executor.modules.combat.crystalaura.calcs.CrystalAu
 import halq.misericordia.fun.executor.modules.combat.crystalaura.calcs.CrystalAuraCalcs;
 import halq.misericordia.fun.executor.settings.*;
 import halq.misericordia.fun.utils.utils.TimerUtil;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.network.play.client.CPacketPlayer;
@@ -21,6 +23,7 @@ import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.network.play.server.SPacketSpawnObject;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -32,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Halq
@@ -43,8 +47,6 @@ public class CrystalAuraModule extends Module {
     public static CrystalAuraModule INSTANCE;
     public static CrystalAuraCalcPos.CalcPos crystalPosCalc = new CrystalAuraCalcPos.CalcPos(BlockPos.ORIGIN, 0);
     public static CrystalAuraModule instance = new CrystalAuraModule();
-    static CrystalAuraModule crystalAuraModule;
-    private final TimerUtil threadDelay = new TimerUtil();
     public SettingCategory settings = create("CrystalAura", "Break", Arrays.asList("Break", "Place", "Render", "MultiThread", "AutoSwitch", "Rotations", "Misc"), 1);
     public SettingBoolean place = create("Place", true, false);
     public SettingBoolean breakCrystal = create("Break", true, false);
@@ -62,7 +64,6 @@ public class CrystalAuraModule extends Module {
     public SettingDouble placeRange = create("PlaceRange", 4.0, 0.0, 6.0, false);
     public SettingDouble breakRange = create("BreakRange", 4.0, 0.0, 6.0, false);
     public SettingDouble playerRange = create("PlayerRange", 4.0, 0.0, 6.0, false);
-
     public SettingDouble minDmg = create("MinDmg", 4.0, 0.0, 36.0, false);
     public SettingDouble maxDmg = create("MaxSelfDmg", 0.0, 0.0, 36.0, false);
     public SettingInteger ppt = create("PPT", 2, 0, 10, false);
@@ -77,12 +78,13 @@ public class CrystalAuraModule extends Module {
     public SettingInteger blue = create("Blue", 255, 0, 255, false);
     public SettingInteger alpha = create("Alpha", 255, 0, 255, false);
     EntityPlayer targetPlayer;
-    Thread thread;
     BlockPos finalPos;
     float targetDMG;
     private static int predictID = 0;
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
     boolean isPredictedBreak = false;
+    private final ReentrantLock placementLock = new ReentrantLock();
+
 
     public CrystalAuraModule() {
         super("CrystalAura", Category.COMBAT);
@@ -134,7 +136,6 @@ public class CrystalAuraModule extends Module {
         BlockPos crystalBlockPos = crystalPositions.get(0);
         List<CPacketPlayerTryUseItemOnBlock> packets = new ArrayList<>();
 
-
         if (rotations.getValue()) {
             switch (rotateMode.getValue()) {
                 case "Silent":
@@ -152,7 +153,7 @@ public class CrystalAuraModule extends Module {
                     break;
                 case "Packet":
                     packets.add(new CPacketPlayerTryUseItemOnBlock(crystalBlockPos, EnumFacing.UP, EnumHand.MAIN_HAND, 0, 0, 0));
-                    sendCrystalPlacementPacketAsync(packets);
+                    sendCrystalPlacementPacketAsync(packets, crystalBlockPos);
                     break;
             }
         }
@@ -162,7 +163,7 @@ public class CrystalAuraModule extends Module {
     }
 
 
-    private void sendCrystalPlacementPacketAsync(List<CPacketPlayerTryUseItemOnBlock> packets) {
+    private void sendCrystalPlacementPacketAsync(List<CPacketPlayerTryUseItemOnBlock> packets, BlockPos pos) {
         int batchSize = calculateBatchSize(packets.size());
         int numOfBatches = (int) Math.ceil((double) packets.size() / batchSize);
         boolean handAnimationsValue = handAnimations.getValue();
@@ -173,14 +174,16 @@ public class CrystalAuraModule extends Module {
 
             List<CPacketPlayerTryUseItemOnBlock> batch = packets.subList(startIndex, endIndex);
 
+            placementLock.lock();
             CompletableFuture.runAsync(() -> {
-
                 for (CPacketPlayerTryUseItemOnBlock packet : batch) {
                     try {
                         mc.player.connection.sendPacket(packet);
-
+                        Thread.sleep(100);
                     } catch (Exception e) {
                         e.printStackTrace();
+                    } finally {
+                        placementLock.unlock();
                     }
                 }
             });
@@ -191,13 +194,14 @@ public class CrystalAuraModule extends Module {
     }
 
     private int calculateBatchSize(int packetCount) {
-        double desiredPacketRate = 3.0;
+        double desiredPacketRate = 2.0;
         int minimumBatchSize = 2;
 
         double batchSize = Math.ceil(packetCount / desiredPacketRate);
 
         return (int) Math.max(minimumBatchSize, batchSize);
     }
+    //calcula os packets
 
     @SubscribeEvent
     public void onPacketReceive(PacketEvent.PacketReceiveEvent event) {
@@ -221,7 +225,6 @@ public class CrystalAuraModule extends Module {
                 if (entity instanceof EntityEnderCrystal && predictID == entity.getEntityId() && !isPredictedBreak) {
 
                     sendBreakPacketAsync((EntityEnderCrystal) entity);
-                    // MessageUtil.sendMessage("Predicted!");
                     isPredictedBreak = true;
 
                 }
@@ -235,6 +238,7 @@ public class CrystalAuraModule extends Module {
         executorService.execute(() -> {
             if (crystal != null) {
                 sendBreakPacketAsync(crystal);
+                crystal.setDead();
             }
         });
     }

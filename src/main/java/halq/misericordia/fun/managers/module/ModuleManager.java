@@ -9,7 +9,7 @@ import halq.misericordia.fun.executor.modules.combat.aimbot.AimBot;
 import halq.misericordia.fun.executor.modules.combat.anvilaura.AnvilAura;
 import halq.misericordia.fun.executor.modules.combat.trap.AutoTrap;
 import halq.misericordia.fun.executor.modules.combat.crystalaura.module.CrystalAuraModule;
-import halq.misericordia.fun.executor.modules.combat.holefiller.HoleFillerModule;
+import halq.misericordia.fun.executor.modules.combat.holefiller.module.HoleFillerModule;
 import halq.misericordia.fun.executor.modules.combat.killaura.KillAura;
 import halq.misericordia.fun.executor.modules.combat.surround.Surround;
 import halq.misericordia.fun.executor.modules.combat.trap.SelfTrap;
@@ -18,6 +18,7 @@ import halq.misericordia.fun.executor.modules.miscellaneous.*;
 import halq.misericordia.fun.executor.modules.movement.*;
 import halq.misericordia.fun.executor.modules.render.*;
 import halq.misericordia.fun.executor.modules.render.chams.crystalchams.CrystalChamsModule;
+import halq.misericordia.fun.executor.modules.render.fallpredict.module.FallPredictModule;
 import halq.misericordia.fun.executor.modules.world.Notifier;
 import halq.misericordia.fun.utils.Minecraftable;
 import halq.misericordia.fun.utils.utils.MessageUtil;
@@ -110,6 +111,7 @@ public class ModuleManager implements Minecraftable {
         addModule(new NoSlow());
         addModule(new ReverseStep());
         addModule(new Velocity());
+        addModule(new FallPredictModule());
 
     }
 

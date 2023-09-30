@@ -11,13 +11,13 @@ bobView:true
 anaglyph3d:false
 maxFps:260
 fboEnable:true
-difficulty:3
+difficulty:0
 fancyGraphics:false
 ao:0
 renderClouds:false
 resourcePacks:[]
 incompatibleResourcePacks:[]
-lastServer:0.0.0.0
+lastServer:ssn.gg
 lang:en_us
 chatVisibility:0
 chatColors:true
